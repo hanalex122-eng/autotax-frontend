@@ -432,12 +432,13 @@ function DashboardView({refreshKey}){
       <div style={css.card}><h3 style={{fontSize:15,fontWeight:600,color:theme.text,margin:"0 0 20px"}}>Kategorien</h3>{data.by_category?.length>0?<DonutChart data={data.by_category}/>:<div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:40,color:theme.textDim}}><Icon d={I.tax} size={32} color={theme.textDim}/><p style={{fontSize:13,marginTop:10}}>Keine Kategorien</p></div>}</div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-      <div style={css.card}><h3 style={{fontSize:15,fontWeight:600,color:theme.text,margin:"0 0 16px",display:"flex",alignItems:"center",gap:8}}><div style={{width:6,height:6,borderRadius:"50%",background:theme.blue}}/>MwSt Übersicht</h3>
+      <div style={css.card}><h3 style={{fontSize:15,fontWeight:600,color:theme.text,margin:"0 0 4px",display:"flex",alignItems:"center",gap:8}}><div style={{width:6,height:6,borderRadius:"50%",background:theme.blue}}/>MwSt Übersicht</h3>
+        <div style={{fontSize:12,opacity:0.6,marginBottom:14}}>How much VAT you owe or get back</div>
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{color:theme.textMuted,fontSize:13}}>Gezahlte Vorsteuer</span><span style={{color:theme.text,fontFamily:mono,fontSize:14,fontWeight:500}}>€{data.total_vat_paid?.toFixed(2)}</span></div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{color:theme.textMuted,fontSize:13}}>Vereinnahmte USt</span><span style={{color:theme.text,fontFamily:mono,fontSize:14,fontWeight:500}}>€{data.total_vat_collected?.toFixed(2)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{color:theme.textMuted,fontSize:13}}>VAT Paid (Expenses)</span><span style={{color:theme.text,fontFamily:mono,fontSize:14,fontWeight:500}}>€{Number(data.total_vat_paid||0).toFixed(2)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{color:theme.textMuted,fontSize:13}}>VAT Collected (Income)</span><span style={{color:theme.text,fontFamily:mono,fontSize:14,fontWeight:500}}>€{Number(data.total_vat_collected||0).toFixed(2)}</span></div>
           <div style={{height:1,background:theme.border,margin:"2px 0"}}/>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{color:theme.text,fontSize:14,fontWeight:600}}>Saldo</span><span style={{color:data.vat_balance>=0?theme.danger:theme.accent,fontFamily:mono,fontSize:17,fontWeight:700}}>€{data.vat_balance?.toFixed(2)}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{color:theme.text,fontSize:14,fontWeight:600}}>VAT Balance</span><span style={{color:(data.vat_balance||0)>0?"#ef4444":"#22c55e",fontFamily:mono,fontSize:17,fontWeight:700}}>€{Number(data.vat_balance||0).toFixed(2)}</span></div>
         </div>
       </div>
       <div style={css.card}><h3 style={{fontSize:15,fontWeight:600,color:theme.text,margin:"0 0 16px",display:"flex",alignItems:"center",gap:8}}><div style={{width:6,height:6,borderRadius:"50%",background:theme.purple}}/>Gesamt</h3>
