@@ -39,7 +39,7 @@ thead tr:hover { background: transparent !important; transition-delay: 0ms; }
 <script type="text/babel">
 const { useState, useEffect, useRef, Fragment } = React;
 
-const API = "https://web-production-69a8.up.railway.app";
+const API = "/api";
 
 const theme = {
   bg: "#0a0e17", surface: "#111827", surfaceAlt: "#1a2234", card: "#1e293b",
@@ -229,7 +229,7 @@ function AuthScreen({onLogin}){
         setInfo("Konto erstellt! Bitte jetzt mit deinen Daten einloggen.");
       }else{
         console.log("LOGIN START", realEmail);
-        const res=await fetch("https://web-production-69a8.up.railway.app/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:realEmail,password:realPass})});
+        const res=await fetch(API+"/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:realEmail,password:realPass})});
         console.log("RESPONSE STATUS:", res.status);
         const data=await res.json();
         console.log("LOGIN RESPONSE:", data);
