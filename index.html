@@ -81,15 +81,14 @@ function formatDateEU(dateStr) {
 
 async function api(path, opts={}) {
   const token = localStorage.getItem("atx_token");
-  console.log("TOKEN:", token, "PATH:", path);
-  if(!token && !path.startsWith("/auth/")){throw new Error("no token");}
-  const headers = {"Content-Type":"application/json",...opts.headers};
-  if(token) headers["Authorization"]="Bearer "+token;
+  const headers = {"Content-Type":"application/json",...(opts.headers||{}),...(token?{Authorization:`Bearer ${token}`}:{})};
   const res = await fetch(API+path,{...opts,headers});
   if(res.status===401){localStorage.removeItem("atx_token");throw new Error("unauthorized");}
   if(!res.ok){const e=await res.json().catch(()=>({}));const msg=typeof e.detail==="string"?e.detail:typeof e.detail==="object"?JSON.stringify(e.detail):e.message||"Error";throw new Error(msg);}
   if(res.status===204) return null;
-  return res.json();
+  const data=await res.json();
+  console.log("API RESPONSE:",path,data);
+  return data;
 }
 
 function ATLogo({size=36}){return(
@@ -237,7 +236,7 @@ function AuthScreen({onLogin}){
         const token=data.access_token||data.token||data.data?.token;
         if(!token){console.error("NO TOKEN RECEIVED",data);setError("Login fehlgeschlagen.");setLoading(false);return;}
         localStorage.setItem("atx_token",token);
-        onLogin();
+        window.location.reload();
       }
     }catch(e){
       const msg=e.message||"";
@@ -362,8 +361,8 @@ function DashboardView({refreshKey}){
   const[data,setData]=useState(null);const[loading,setLoading]=useState(true);const[allInv,setAllInv]=useState([]);
   const load=()=>{
     setLoading(true);
-    api("/invoices?limit=100").then(d=>{const items=d.items||[];const inc=items.filter(i=>i.invoice_type==="income");const exp=items.filter(i=>i.invoice_type==="expense");const totalIn=inc.reduce((s,i)=>s+(i.total_amount||0),0);const totalEx=exp.reduce((s,i)=>s+(i.total_amount||0),0);const vatPaid=exp.reduce((s,i)=>s+(i.vat_amount||0),0);const vatColl=inc.reduce((s,i)=>s+(i.vat_amount||0),0);const catMap={};items.forEach(i=>{const c=i.category||"other";catMap[c]=(catMap[c]||0)+(i.total_amount||0);});const byCategory=Object.entries(catMap).map(([category,total])=>({category,total})).sort((a,b)=>b.total-a.total);const monthMap={};items.forEach(i=>{const m=(i.date||"").slice(0,7);if(!m)return;if(!monthMap[m])monthMap[m]={month:m,income:0,expenses:0};if(i.invoice_type==="income")monthMap[m].income+=(i.total_amount||0);else monthMap[m].expenses+=(i.total_amount||0);});const monthlyBreakdown=Object.values(monthMap).sort((a,b)=>a.month.localeCompare(b.month));const net=totalIn-totalEx;const taxRate=net>0?(net>61356?42:net>17005?30:net>10908?14:0):0;setData({total_income:totalIn,total_expenses:totalEx,net_profit:net,tax_estimate:net>0?net*(taxRate/100):0,tax_rate_applied:taxRate,income_count:inc.length,expense_count:exp.length,invoice_count:items.length,monthly_breakdown:monthlyBreakdown,by_category:byCategory,total_vat_paid:vatPaid,total_vat_collected:vatColl,vat_balance:vatColl-vatPaid});}).catch(()=>{}).finally(()=>setLoading(false));
-    api("/invoices?limit=100").then(d=>{setAllInv(d.items||[]);}).catch(()=>{});
+    api(`/invoices?limit=100&ts=${Date.now()}`).then(d=>{const items=d.items||[];const inc=items.filter(i=>i.invoice_type==="income");const exp=items.filter(i=>i.invoice_type==="expense");const totalIn=inc.reduce((s,i)=>s+(i.total_amount||0),0);const totalEx=exp.reduce((s,i)=>s+(i.total_amount||0),0);const vatPaid=exp.reduce((s,i)=>s+(i.vat_amount||0),0);const vatColl=inc.reduce((s,i)=>s+(i.vat_amount||0),0);const catMap={};items.forEach(i=>{const c=i.category||"other";catMap[c]=(catMap[c]||0)+(i.total_amount||0);});const byCategory=Object.entries(catMap).map(([category,total])=>({category,total})).sort((a,b)=>b.total-a.total);const monthMap={};items.forEach(i=>{const m=(i.date||"").slice(0,7);if(!m)return;if(!monthMap[m])monthMap[m]={month:m,income:0,expenses:0};if(i.invoice_type==="income")monthMap[m].income+=(i.total_amount||0);else monthMap[m].expenses+=(i.total_amount||0);});const monthlyBreakdown=Object.values(monthMap).sort((a,b)=>a.month.localeCompare(b.month));const net=totalIn-totalEx;const taxRate=net>0?(net>61356?42:net>17005?30:net>10908?14:0):0;setData({total_income:totalIn,total_expenses:totalEx,net_profit:net,tax_estimate:net>0?net*(taxRate/100):0,tax_rate_applied:taxRate,income_count:inc.length,expense_count:exp.length,invoice_count:items.length,monthly_breakdown:monthlyBreakdown,by_category:byCategory,total_vat_paid:vatPaid,total_vat_collected:vatColl,vat_balance:vatColl-vatPaid});}).catch(()=>{}).finally(()=>setLoading(false));
+    api(`/invoices?limit=100&ts=${Date.now()}`).then(d=>{setAllInv(d.items||[]);}).catch(()=>{});
   };
   useEffect(load,[refreshKey]);
 
@@ -373,7 +372,7 @@ function DashboardView({refreshKey}){
     try{
       let delCount=0;
       while(true){
-        const invData=await api("/invoices?limit=100").catch(()=>({items:[]}));
+        const invData=await api(`/invoices?limit=100&ts=${Date.now()}`).catch(()=>({items:[]}));
         const invoices=invData.items||[];
         if(invoices.length===0) break;
         for(const inv of invoices){try{await api("/invoices/"+inv.id,{method:"DELETE"});delCount++;}catch(e){}}
