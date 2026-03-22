@@ -229,37 +229,27 @@ function AuthScreen({onLogin}){
         setMode("login");setError("");setPassword("");
         setInfo("Konto erstellt! Bitte jetzt mit deinen Daten einloggen.");
       }else{
-        console.log("LOGIN START", realEmail);
-        const res=await fetch(API+"/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:realEmail,password:realPass}),mode:"cors"});
-        console.log("RESPONSE STATUS:", res.status);
-        const data=await res.json();
-        console.log("LOGIN RESPONSE:", data);
-        const token=data.access_token||data.token||data.data?.token;
-        if(!token){console.error("NO TOKEN RECEIVED",data);setError("Login fehlgeschlagen.");setLoading(false);return;}
-        localStorage.setItem("atx_token",token);
-        window.location.reload();
+        console.log("LOGIN START");
+        try{
+          const res=await fetch(API+"/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:realEmail,password:realPass})});
+          console.log("STATUS:",res.status);
+          const text=await res.text();
+          console.log("RAW RESPONSE:",text);
+          let data;
+          try{data=JSON.parse(text);}catch(e){console.error("JSON PARSE ERROR",e);setError("Invalid server response");setLoading(false);return;}
+          console.log("PARSED DATA:",data);
+          const token=data.access_token||data.token;
+          if(!token){console.error("NO TOKEN",data);setError("Login failed - no token");setLoading(false);return;}
+          localStorage.setItem("atx_token",token);
+          window.location.reload();
+        }catch(e){
+          console.error("FETCH ERROR:",e);
+          setError("Network error");
+        }
       }
     }catch(e){
-      const msg=e.message||"";
-      if(msg.includes("Failed to fetch")||msg.includes("NetworkError")||msg.includes("ERR_")||msg.includes("Load failed")){
-        setError("Server nicht erreichbar. Prüfe deine Internetverbindung oder versuche es in 1-2 Minuten erneut. (Der Server startet evtl. gerade neu)");
-      }else if(msg.includes("special character")){
-        setError("Passwort muss mindestens 1 Sonderzeichen enthalten (z.B. ! @ # $ % & *)");
-      }else if(msg.includes("uppercase")){
-        setError("Passwort muss mindestens 1 Großbuchstaben enthalten.");
-      }else if(msg.includes("digit")||msg.includes("number")){
-        setError("Passwort muss mindestens 1 Zahl enthalten.");
-      }else if(msg.includes("Password")||msg.includes("password")){
-        setError("Passwort-Anforderungen: min. 6 Zeichen, 1 Großbuchstabe, 1 Zahl, 1 Sonderzeichen (! @ # $ % & *)");
-      }else if(msg.includes("unauthorized")||msg.includes("401")||msg.includes("Invalid")||msg.includes("invalid")){
-        setError("E-Mail oder Passwort falsch.");
-      }else if(msg.includes("already")||msg.includes("exists")||msg.includes("duplicate")){
-        setError("Diese E-Mail ist bereits registriert. Bitte auf 'Anmelden' klicken.");
-      }else if(msg.includes("validation")||msg.includes("422")||msg.includes("value_error")){
-        setError("Ungültige Eingabe. Passwort: min. 6 Zeichen, 1 Großbuchstabe, 1 Zahl, 1 Sonderzeichen.");
-      }else{
-        setError(msg||"Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
-      }
+      console.error("OUTER ERROR:",e);
+      setError(e.message||"Ein Fehler ist aufgetreten.");
     }
     setLoading(false);
   };
