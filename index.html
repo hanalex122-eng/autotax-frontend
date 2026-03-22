@@ -229,10 +229,14 @@ function AuthScreen({onLogin}){
         setMode("login");setError("");setPassword("");
         setInfo("Konto erstellt! Bitte jetzt mit deinen Daten einloggen.");
       }else{
-        const data=await api("/auth/login",{method:"POST",body:JSON.stringify({email:realEmail,password:realPass})});
-        console.log("TOKEN SAVED:", data.token);
-        localStorage.setItem("atx_token", data.token);
-        if(data.refresh_token) localStorage.setItem("atx_refresh", data.refresh_token);
+        console.log("LOGIN START", realEmail);
+        const res=await fetch("https://web-production-69a8.up.railway.app/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:realEmail,password:realPass})});
+        console.log("RESPONSE STATUS:", res.status);
+        const data=await res.json();
+        console.log("LOGIN RESPONSE:", data);
+        const token=data.access_token||data.token||data.data?.token;
+        if(!token){console.error("NO TOKEN RECEIVED",data);setError("Login fehlgeschlagen.");setLoading(false);return;}
+        localStorage.setItem("atx_token",token);
         onLogin();
       }
     }catch(e){
