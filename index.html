@@ -403,6 +403,7 @@ function DashboardView({refreshKey}){
 
   if(loading)return<div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:80,color:theme.textMuted,gap:12}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={theme.accent} strokeWidth="2" style={{animation:"spin 1s linear infinite"}}><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.49-8.49l2.83-2.83M2 12h4m12 0h4m-3.93 7.07l-2.83-2.83M7.76 7.76L4.93 4.93"/></svg><span>Dashboard wird geladen...</span></div>;
   if(!data)return<div style={{...css.card,maxWidth:400,margin:"60px auto",textAlign:"center",padding:40}}><div style={{fontSize:28,marginBottom:12}}>⚠️</div><div style={{color:theme.text,fontSize:16,fontWeight:600,marginBottom:6}}>Dashboard nicht verfügbar</div><div style={{color:theme.textMuted,fontSize:13}}>Die Daten konnten nicht geladen werden. Bitte versuche es erneut.</div><button style={{...css.btn(),marginTop:16}} onClick={load}>⟳ Erneut laden</button></div>;
+  const downloadCSV=()=>{if(!allInv||!allInv.length)return;const h=["Date","Vendor","Category","Total","VAT"];const rows=allInv.map(i=>[(i.date||"").replace(/,/g,""),`"${(i.vendor||"").replace(/"/g,'""')}"`,i.category||"",i.total_amount||0,i.vat_amount||0]);const csv=[h.join(","),...rows.map(r=>r.join(","))].join("\n");const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="invoices.csv";a.click();URL.revokeObjectURL(url);};
   const si=(data.monthly_breakdown||[]).map(m=>m.income||0);const se=(data.monthly_breakdown||[]).map(m=>m.expenses||0);
   const readCount=allInv.filter(i=>i.total_amount>0).length;const unreadCount=allInv.filter(i=>!i.total_amount||i.total_amount===0).length;
   const totalPct=allInv.length>0?Math.round((readCount/allInv.length)*100):0;
@@ -413,6 +414,7 @@ function DashboardView({refreshKey}){
       <div style={{display:"flex",gap:8}}>
         <button style={css.btnOutline} onClick={load}>⟳ Aktualisieren</button>
         <button style={{...css.btnOutline,borderColor:"rgba(239,68,68,0.3)",color:theme.danger}} onClick={resetAll}><Icon d={I.reset} size={14} color={theme.danger}/> Zurücksetzen</button>
+        <button style={{padding:"8px 12px",background:"#22c55e",border:"none",borderRadius:6,color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}} onClick={downloadCSV}>CSV Export</button>
       </div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:14}}>
